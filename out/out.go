@@ -34,6 +34,18 @@ func init() {
 	Trace.SetPrefix("trace")
 }
 
+func (lvl Level) String() string {
+	switch lvl {
+	case Error: return "Error"
+	case Warn: return "Warn"
+	case Info: return "Info"
+	case Verbose: return "Verbose"
+	case Debug: return "Debug"
+	case Trace: return "Trace"
+	}
+	return "-"
+}
+
 func (lvl Level) SetWriter(wr io.Writer) {
 	writer[lvl] = wr
 }
@@ -56,8 +68,20 @@ func (lvl Level) Prefix() []byte {
 	return prefix[lvl]
 }
 
+func (lvl Level) FullPrefixString() string {
+	if pfx := lvl.Prefix(); pfx != nil {
+		return string(pfx) + string(pfxSep)
+	}
+	return ""
+}
+
 func (lvl Level) SetPrefix(pfx string) {
-	prefix[lvl] = []byte(pfx)
+	switch len(pfx) {
+	case 0:
+		prefix[lvl] = nil
+	default:
+		prefix[lvl] = []byte(pfx)
+	}
 }
 
 var endl = []byte{'\n'}
