@@ -20,8 +20,8 @@ const (
 )
 
 var DefaultWriter io.Writer = os.Stderr
-var PrintFunction func(lvl Level, b []byte) = DefaultPrintFunction
-var PrefixFunction func(lvl Level, bf* bytes.Buffer) = DefaultPrefixFunction
+var PrintFunction func(Level, []byte) = DefaultPrintFunction
+var PrefixFunction func(Level, *bytes.Buffer) = DefaultPrefixFunction
 
 var writer = make([]io.Writer,levelsCount)
 var prefix = make([][]byte,levelsCount)
@@ -69,10 +69,9 @@ func (lvl Level) Prefix() []byte {
 }
 
 func (lvl Level) FullPrefixString() string {
-	if pfx := lvl.Prefix(); pfx != nil {
-		return string(pfx) + string(pfxSep)
-	}
-	return ""
+	var bf bytes.Buffer
+	PrefixFunction(lvl,&bf)
+	return bf.String()
 }
 
 func (lvl Level) SetPrefix(pfx string) {
