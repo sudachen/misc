@@ -7,7 +7,10 @@ import (
 	"bytes"
 )
 
-type Level byte
+type Level int
+
+const StdErr Level = -2
+const StdOut Level = -1
 
 const (
 	Error Level = iota
@@ -59,12 +62,24 @@ func (lvl Level) Visible() bool {
 }
 
 func (lvl Level) Writer() io.Writer {
+	if lvl < 0 {
+		switch lvl {
+		case StdErr:
+			return os.Stderr
+		case StdOut:
+			return os.Stdout
+		}
+		return DefaultWriter
+	}
 	wr := writer[lvl]
 	if wr == nil { return DefaultWriter }
 	return wr
 }
 
 func (lvl Level) Prefix() []byte {
+	if lvl < 0 {
+		return nil
+	}
 	return prefix[lvl]
 }
 
@@ -120,4 +135,12 @@ func (lvl Level) Printf(t string, a ...interface{}) {
 		}
 		PrintFunction(lvl,textBuf.Bytes())
 	}
+}
+
+func Fatalf(t string, a ...interface{}) {
+	if len(t) < 1 || t[len(t)-1] != '\n' {
+		t = t + "\n"
+	}
+	Error.Printf(t,a...)
+	os.Exit(255)
 }
