@@ -1,10 +1,10 @@
 package out
 
 import (
-	"fmt"
-	"os"
-	"io"
 	"bytes"
+	"fmt"
+	"io"
+	"os"
 )
 
 type Level int
@@ -13,7 +13,8 @@ const StdErr Level = -2
 const StdOut Level = -1
 
 const (
-	Error Level = iota
+	Crit Level = iota
+	Error
 	Warn
 	Info
 	Verbose
@@ -26,8 +27,8 @@ var DefaultWriter io.Writer = os.Stderr
 var PrintFunction func(Level, []byte) = DefaultPrintFunction
 var PrefixFunction func(Level, *bytes.Buffer) = DefaultPrefixFunction
 
-var writer = make([]io.Writer,levelsCount)
-var prefix = make([][]byte,levelsCount)
+var writer = make([]io.Writer, levelsCount)
+var prefix = make([][]byte, levelsCount)
 var currentLevel = Info
 
 func init() {
@@ -39,12 +40,18 @@ func init() {
 
 func (lvl Level) String() string {
 	switch lvl {
-	case Error: return "Error"
-	case Warn: return "Warn"
-	case Info: return "Info"
-	case Verbose: return "Verbose"
-	case Debug: return "Debug"
-	case Trace: return "Trace"
+	case Error:
+		return "Error"
+	case Warn:
+		return "Warn"
+	case Info:
+		return "Info"
+	case Verbose:
+		return "Verbose"
+	case Debug:
+		return "Debug"
+	case Trace:
+		return "Trace"
 	}
 	return "-"
 }
@@ -72,7 +79,9 @@ func (lvl Level) Writer() io.Writer {
 		return DefaultWriter
 	}
 	wr := writer[lvl]
-	if wr == nil { return DefaultWriter }
+	if wr == nil {
+		return DefaultWriter
+	}
 	return wr
 }
 
@@ -85,7 +94,7 @@ func (lvl Level) Prefix() []byte {
 
 func (lvl Level) FullPrefixString() string {
 	var bf bytes.Buffer
-	PrefixFunction(lvl,&bf)
+	PrefixFunction(lvl, &bf)
 	return bf.String()
 }
 
@@ -99,10 +108,9 @@ func (lvl Level) SetPrefix(pfx string) {
 }
 
 var endl = []byte{'\n'}
-var pfxSep = []byte{':',' '}
-var textBuf bytes.Buffer
+var pfxSep = []byte{':', ' '}
 
-func DefaultPrefixFunction(lvl Level, bf* bytes.Buffer) {
+func DefaultPrefixFunction(lvl Level, bf *bytes.Buffer) {
 	if pfx := lvl.Prefix(); pfx != nil {
 		bf.Write(pfx)
 		bf.Write(pfxSep)
@@ -115,25 +123,25 @@ func DefaultPrintFunction(lvl Level, b []byte) {
 
 func (lvl Level) Print(a ...interface{}) {
 	if lvl.Visible() {
-		textBuf.Reset()
-		PrefixFunction(lvl,&textBuf)
+		var textBuf bytes.Buffer
+		PrefixFunction(lvl, &textBuf)
 		fmt.Fprint(&textBuf, a...)
 		if l := textBuf.Len(); l == 0 || textBuf.Bytes()[l-1] != '\n' {
 			textBuf.Write(endl)
 		}
-		PrintFunction(lvl,textBuf.Bytes())
+		PrintFunction(lvl, textBuf.Bytes())
 	}
 }
 
 func (lvl Level) Printf(t string, a ...interface{}) {
 	if lvl.Visible() {
-		textBuf.Reset()
-		PrefixFunction(lvl,&textBuf)
+		var textBuf bytes.Buffer
+		PrefixFunction(lvl, &textBuf)
 		fmt.Fprintf(&textBuf, t, a...)
 		if l := textBuf.Len(); l == 0 || textBuf.Bytes()[l-1] != '\n' {
 			textBuf.Write(endl)
 		}
-		PrintFunction(lvl,textBuf.Bytes())
+		PrintFunction(lvl, textBuf.Bytes())
 	}
 }
 
@@ -141,6 +149,6 @@ func Fatalf(t string, a ...interface{}) {
 	if len(t) < 1 || t[len(t)-1] != '\n' {
 		t = t + "\n"
 	}
-	Error.Printf(t,a...)
+	Error.Printf(t, a...)
 	os.Exit(255)
 }
